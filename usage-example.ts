@@ -23,7 +23,7 @@ input BookInput {
 }`;
 
 class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
-  visitInputFieldDefinition(field: CoercibleGraphQLInputField) {
+  visitInputFieldDefinition(field: CoercibleGraphQLInputField<string>) {
     const { coerce = defaultCoercer } = field;
     field.coerce = (...arg) => {
       const value = coerce(...arg);
@@ -32,7 +32,7 @@ class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
     }
   }
 
-  visitArgumentDefinition(argument: CoercibleGraphQLArgument) {
+  visitArgumentDefinition(argument: CoercibleGraphQLArgument<string>) {
     const { coerce = defaultCoercer } = argument;
     argument.coerce = (...arg) => {
       const value = coerce(...arg);
