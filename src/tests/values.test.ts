@@ -60,6 +60,25 @@ describe('Coercion of field arguments', () => {
         expect(coerceSpy).toHaveBeenCalledWith('Le Rouge et le Noir');
         expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
       });
+
+      it('should report thrown error', async () => {
+        const onErrorSpy = jest.fn();
+
+        const error = new Error('hi');
+        coerceSpy.mockImplementation(async (v: string) => {
+          await delay(100);
+          throw error;
+        });
+
+        const coercedArguments = await coerceFieldArgumentsValues(
+          field,
+          { title: 'Le Rouge et le Noir' },
+          onErrorSpy
+        );
+
+        expect(onErrorSpy).toHaveBeenCalledWith(error);
+        expect(coercedArguments).toEqual({});
+      });
     });
   });
 
