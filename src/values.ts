@@ -44,7 +44,7 @@ export const coerceFieldArgumentsValues = async (
 }
 
 const coerceInputValue = async (
-  def: CoercibleGraphQLInputObjectType,
+  def: CoercibleGraphQLInputObjectType<{ [key: string]: any }>,
   values: { [key: string]: any },
   onError?: (error: Error) => void,
 ) => {
@@ -71,7 +71,6 @@ const coerceInputValue = async (
   const { coerce = defaultCoercer } = def;
 
   try {
-    // @ts-ignore
     coercedValues = await coerce(coercedValues);
   } catch (e) {
     onError?.(e);
