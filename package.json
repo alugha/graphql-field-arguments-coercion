@@ -12,9 +12,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/chai": "^4.2.11",
     "@types/node": "^13.13.4",
     "chai": "^4.2.0",
     "graphql": "^15.0.0",
+    "graphql-tools": "^5.0.0",
     "ts-node": "^8.9.1",
     "typescript": "^3.8.3"
   }
