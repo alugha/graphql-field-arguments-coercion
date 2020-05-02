@@ -348,6 +348,68 @@ describe('Coercion of an input object', () => {
     });
 
   });
+
+  describe('as in a list', () => {
+    let coerceSpy: jest.Mock;
+    let field: GraphQLField<any, any>;
+
+    type ImageInput = {
+      url?: string,
+      file?: Buffer
+    }
+
+    const typDefs = `
+      scalar Upload
+
+      input ImageInput @coerceSpy {
+        url: String,
+        file: Upload
+      }
+
+      type Mutation {
+        createBook(
+          illustrations: [ImageInput]
+        ): Boolean
+      }
+    `;
+
+    beforeEach(() => {
+      coerceSpy = jest.fn();
+      const schema = makeSchema(typDefs, coerceSpy);
+      field = getFieldDefinitionByName(schema, 'createBook');
+    });
+
+    it.only('should coerce value', async () => {
+      coerceSpy.mockImplementation((input: ImageInput) => {
+        return { ...input, _coerced: true };
+      });
+
+      const coercedArguments = await coerceFieldArgumentsValues(field, {
+        illustrations: [
+          {
+            url: 'fooooo',
+          },
+          {
+            url: 'barrr',
+          },
+        ],
+      });
+
+      expect(coerceSpy).toHaveBeenCalledWith({ url: 'fooooo' });
+      expect(coercedArguments).toEqual({
+        illustrations: [
+          {
+            url: 'fooooo',
+            _coerced: true
+          },
+          {
+            url: 'barrr',
+            _coerced: true
+          },
+          ],
+        });
+    });
+  });
 });
 
 describe('Coercion of input field', () => {

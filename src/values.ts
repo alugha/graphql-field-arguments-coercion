@@ -1,4 +1,4 @@
-import {GraphQLField, getNullableType, isInputObjectType, isScalarType } from "graphql";
+import {GraphQLField, getNullableType, isInputObjectType, isScalarType, isListType } from "graphql";
 import { Coercer, CoercibleGraphQLArgument, CoercibleGraphQLInputField, CoercibleGraphQLInputObjectType } from "./types";
 import { forEach } from "./utils";
 
@@ -116,7 +116,20 @@ const coerceInputFieldOrArgumentValue = async (
       value,
       onError
     );
-  }
+  } else if (isListType(nullableType)) {
+    if (!Array.isArray(value)) throw new Error('Should be an array');
+
+    const nonNullableItemType = getNullableType(nullableType.ofType);
+    if (isInputObjectType(nonNullableItemType)) {
+      value = await Promise.all(
+        value.map((itemValue) => coerceInputValue(
+          nonNullableItemType,
+          itemValue,
+          onError
+        ))
+      );
+    }
+  };
 
   const { coerce = defaultCoercer } = def;
   try {
