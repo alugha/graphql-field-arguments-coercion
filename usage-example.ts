@@ -1,7 +1,7 @@
 import { CoercibleGraphQLInputField, defaultCoercer, CoercibleGraphQLArgument, coerceFieldArgumentsValues } from './src';
 import { assert } from 'chai';
 import { SchemaDirectiveVisitor, makeExecutableSchema, visitSchema, SchemaVisitor } from 'graphql-tools';
-import { GraphQLField, defaultFieldResolver, GraphQLError, execute, graphql } from 'graphql';
+import { GraphQLField, defaultFieldResolver, graphql } from 'graphql';
 
 const typeDefs = `
 directive @length(max: Int!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
@@ -24,9 +24,10 @@ input BookInput {
 
 class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
   visitInputFieldDefinition(field: CoercibleGraphQLInputField<string>) {
-    const { coerce = defaultCoercer } = field;
-    field.coerce = (...arg) => {
-      const value = coerce(...arg);
+    const { coerce } = field;
+    field.coerce = async (value, ...args) => {
+      // called other coercers
+      if (coerce) value = await coerce(value, ...args);
       assert.isAtMost(value.length, this.args.max);
       return value;
     }
@@ -34,8 +35,9 @@ class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
 
   visitArgumentDefinition(argument: CoercibleGraphQLArgument<string>) {
     const { coerce = defaultCoercer } = argument;
-    argument.coerce = (...arg) => {
-      const value = coerce(...arg);
+    argument.coerce = async (value, ...args) => {
+      // called other coercers
+      if (coerce) value = await coerce(value, ...args);
       assert.isAtMost(value.length, this.args.max);
       return value;
     }
@@ -70,7 +72,7 @@ class FieldResoverWrapperVisitor extends SchemaVisitor {
     const { resolve = defaultFieldResolver } = field;
     field.resolve = async (parent, argumentValues, context, info) => {
       const coercionErrors: Error[] = [];
-      const coercedArgumentValues = coerceFieldArgumentsValues(
+      const coercedArgumentValues = await coerceFieldArgumentsValues(
         field,
         argumentValues,
         e => coercionErrors.push(e)
@@ -89,7 +91,7 @@ visitSchema(schema, new FieldResoverWrapperVisitor);
 const query = `
 mutation {
   createBook(book: {
-    title: "sfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfdsfds"
+    title: "sfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdfsdjdjjdjddjdfsdfsdfsdfsdfdsfds"
   }) {
     title
   }

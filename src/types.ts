@@ -9,7 +9,7 @@ import {
  */
 // todo: add promise support Promise<T>
 // todo: add usefull info as argument like context
-export type Coercer<T> = (value: T) => T;
+export type Coercer<T> = (value: T) => T | Promise<T>;
 
 /**
  * A `GraphQLInputField` that can have a `coerce` property with a `Coercer`

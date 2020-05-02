@@ -1,53 +1,130 @@
-import { GraphQLField, getNullableType, isInputObjectType } from "graphql";
-import { Coercer, CoercibleGraphQLArgument, CoercibleGraphQLInputField } from "./types";
+import {GraphQLField, getNullableType, isInputObjectType, isScalarType } from "graphql";
+import { Coercer, CoercibleGraphQLArgument, CoercibleGraphQLInputField, CoercibleGraphQLInputObjectType } from "./types";
+import { forEach } from "./utils";
 
-export const defaultCoercer = <T>(value: T) => value;
+/**
+ * Default coerce function.
+ */
+export const defaultCoercer = async <T>(value: T) => value;
 
-
-export const coerceFieldArgumentsValues = (
+/**
+ * Coerce the given argument values for the given field and
+ * returm the coerced argument.
+ * 
+ * Will browse through all the Argument, the InputObject
+ * and InputField and run the coerce functions.
+ *
+ * If coercers throw errors, they'll be called on `onError`.
+ */
+export const coerceFieldArgumentsValues = async (
   field: GraphQLField<any, any>,
-  argumentValues: { [key: string]: any },
-  onError: (error: Error) => void,
-): { [key: string]: any } => {
+  values: { [key: string]: any },
+  onError?: (error: Error) => void,
+): Promise<{ [key: string]: any }> => {
   const coercedValues: { [key: string]: any } = {};
-  const { args: argDefs } = field;
-  if (!argDefs) return coercedValues;
-
-  for (let _argDef of argDefs) {
-    const argDef = _argDef as CoercibleGraphQLArgument;
-
+  
+  await forEach(
+    field.args || [],
+    async (argDef: CoercibleGraphQLArgument
+  ) => {
     const { name } = argDef;
-    const argValue = argumentValues[name];
-    let coercedArgValue: { [key: string]: any };
+    const argValue = values[name];
+    if (!argValue) return;
 
-    if (!argValue) continue;
-
-    const nullableType = getNullableType(argDef.type);
-
-    if (isInputObjectType(nullableType)) {
-      coercedArgValue = {};
-      const fields = nullableType.getFields();
-      for (let _field of Object.values(fields)) {
-        const field = _field as CoercibleGraphQLInputField;
-
-        // todo check for types other than Scalar
-        if (field.type) {
-
-        }
-        const fieldValue = argValue[field.name];
-        if (!fieldValue) continue;
-        const { coerce = defaultCoercer } = field;
-        try {
-          coercedArgValue[field.name] = coerce(fieldValue)
-        } catch (e) {
-          onError(e);
-        }
-      }
-    } else {
-      throw new Error('not implemented');
-    }
+    const coercedArgValue = await coerceArgumentValue(
+      argDef,
+      argValue,
+      onError
+    );
 
     coercedValues[name] = coercedArgValue
+  });
+
+  return coercedValues;
+}
+
+const coerceInputValue = async (
+  def: CoercibleGraphQLInputObjectType,
+  values: { [key: string]: any },
+  onError?: (error: Error) => void,
+) => {
+  let coercedValues: { [key: string]: any } = {};
+  const fields = def.getFields();
+
+  await forEach(Object.values(fields), async (field: CoercibleGraphQLInputField) => {
+    const { name } = field;
+
+    const value = values[name];
+    if (!value) return;
+
+    try {
+      coercedValues[name] = await coerceInputFieldValue(
+        field,
+        value,
+        onError
+      );
+    } catch (e) {
+      onError?.(e);
+    }
+  });
+
+  const { coerce = defaultCoercer } = def;
+
+  try {
+    // @ts-ignore
+    coercedValues = await coerce(coercedValues);
+  } catch (e) {
+    onError?.(e);
   }
-  return argumentValues;
+
+  return coercedValues;
+}
+
+// coerceArgumentValue and coerceInputFieldValue share
+// the same logic
+const coerceArgumentValue = async (
+  def: CoercibleGraphQLArgument,
+  value: any,
+  onError?: (error: Error) => void,
+) => coerceInputFieldOrArgumentValue(
+  def,
+  value,
+  onError
+);
+
+const coerceInputFieldValue = async (
+  def: CoercibleGraphQLInputField,
+  value: any,
+  onError?: (error: Error) => void,
+) => coerceInputFieldOrArgumentValue(
+  def,
+  value,
+  onError,
+);
+
+const coerceInputFieldOrArgumentValue = async (
+  def: CoercibleGraphQLInputField | CoercibleGraphQLArgument,
+  value: any,
+  onError?: (error: Error) => void,
+) => {
+  let coercedValue: any;
+
+  const nullableType = getNullableType(def.type);
+
+  if (isInputObjectType(nullableType)) {
+    value = await coerceInputValue(
+      nullableType,
+      value,
+      onError
+    );
+  }
+
+  const { coerce = defaultCoercer } = def;
+  try {
+    coercedValue = await coerce(value);
+  } catch (e) {
+    onError?.(e);
+  }
+
+  return coercedValue;
 }
