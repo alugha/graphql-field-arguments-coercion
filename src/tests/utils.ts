@@ -7,26 +7,29 @@ const coerceSpyTypeDefs = `
 directive @coerceSpy on INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_OBJECT
 `;
 
-export const makeSchema = <T = unknown>(typeDefs: string, coerceSpy: Coercer<T>) => {
+export const makeSchema = <TContext, T = unknown>(
+  typeDefs: string,
+  coerceSpy: Coercer<T, TContext>
+) => {
   class CoerceSpyDirective extends SchemaDirectiveVisitor<{}> {
-    visitInputFieldDefinition(field: CoercibleGraphQLInputField<unknown>) {
+    visitInputFieldDefinition(field: CoercibleGraphQLInputField<unknown, TContext>) {
       // @ts-ignore
       field.coerce = coerceSpy;
     }
 
-    visitArgumentDefinition(argument: CoercibleGraphQLArgument<unknown>) {
+    visitArgumentDefinition(argument: CoercibleGraphQLArgument<unknown, TContext>) {
       // @ts-ignore
       argument.coerce = coerceSpy;
     }
 
-    visitInputObject(object: CoercibleGraphQLInputObjectType<unknown>) {
+    visitInputObject(object: CoercibleGraphQLInputObjectType<unknown, TContext>) {
       // @ts-ignore
       object.coerce = coerceSpy;
     }
   };
 
 
-  return makeExecutableSchema({
+  return makeExecutableSchema<TContext>({
     typeDefs: [coerceSpyTypeDefs, typeDefs],
     schemaDirectives: {
       // @ts-ignore

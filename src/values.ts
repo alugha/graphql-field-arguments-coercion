@@ -1,6 +1,6 @@
-import {GraphQLField, getNullableType, isInputObjectType, isScalarType, isListType } from "graphql";
-import { Coercer, CoercibleGraphQLArgument, CoercibleGraphQLInputField, CoercibleGraphQLInputObjectType } from "./types";
-import { forEach } from "./utils";
+import {GraphQLField, getNullableType, isInputObjectType, GraphQLResolveInfo, isListType } from "graphql";
+import {  CoercibleGraphQLArgument, CoercibleGraphQLInputField, CoercibleGraphQLInputObjectType, Path } from "./types";
+import { forEach, addPath } from "./utils";
 
 /**
  * Default coerce function.
@@ -16,16 +16,18 @@ export const defaultCoercer = async <T>(value: T) => value;
  *
  * If coercers throw errors, they'll be called on `onError`.
  */
-export const coerceFieldArgumentsValues = async (
-  field: GraphQLField<any, any>,
+export const coerceFieldArgumentsValues = async <TSource, TContext>(
+  field: GraphQLField<TSource, TContext, { [key: string]: any }>,
   values: { [key: string]: any },
+  context: TContext,
+  fieldResolveInfo: GraphQLResolveInfo,
   onError?: (error: Error) => void,
 ): Promise<{ [key: string]: any }> => {
   const coercedValues: { [key: string]: any } = {};
   
   await forEach(
     field.args || [],
-    async (argDef: CoercibleGraphQLArgument
+    async (argDef: CoercibleGraphQLArgument<any, TContext>
   ) => {
     const { name } = argDef;
     const argValue = values[name];
@@ -34,6 +36,9 @@ export const coerceFieldArgumentsValues = async (
     const coercedArgValue = await coerceArgumentValue(
       argDef,
       argValue,
+      context,
+      addPath(undefined, name),
+      fieldResolveInfo,
       onError
     );
 
@@ -43,15 +48,18 @@ export const coerceFieldArgumentsValues = async (
   return coercedValues;
 }
 
-const coerceInputValue = async (
-  def: CoercibleGraphQLInputObjectType<{ [key: string]: any }>,
+const coerceInputValue = async <TContext>(
+  def: CoercibleGraphQLInputObjectType<{ [key: string]: any }, TContext>,
   values: { [key: string]: any },
+  context: TContext,
+  path: Path,
+  fieldResolveInfo: GraphQLResolveInfo,
   onError?: (error: Error) => void,
 ) => {
   let coercedValues: { [key: string]: any } = {};
   const fields = def.getFields();
 
-  await forEach(Object.values(fields), async (field: CoercibleGraphQLInputField) => {
+  await forEach(Object.values(fields), async (field: CoercibleGraphQLInputField<any, TContext>) => {
     const { name } = field;
 
     const value = values[name];
@@ -61,6 +69,9 @@ const coerceInputValue = async (
       coercedValues[name] = await coerceInputFieldValue(
         field,
         value,
+        context,
+        addPath(path, name),
+        fieldResolveInfo,
         onError
       );
     } catch (e) {
@@ -71,7 +82,15 @@ const coerceInputValue = async (
   const { coerce = defaultCoercer } = def;
 
   try {
-    coercedValues = await coerce(coercedValues);
+    coercedValues = await coerce(
+      coercedValues,
+      context,
+      {
+        path,
+        inputType: null,
+      },
+      fieldResolveInfo,
+    );
   } catch (e) {
     onError?.(e);
   }
@@ -81,29 +100,44 @@ const coerceInputValue = async (
 
 // coerceArgumentValue and coerceInputFieldValue share
 // the same logic
-const coerceArgumentValue = async (
-  def: CoercibleGraphQLArgument,
+const coerceArgumentValue = async <TValue, TContext>(
+  def: CoercibleGraphQLArgument<TValue, TContext>,
   value: any,
+  context: TContext,
+  path: Path,
+  fieldResolveInfo: GraphQLResolveInfo,
   onError?: (error: Error) => void,
 ) => coerceInputFieldOrArgumentValue(
   def,
   value,
-  onError
-);
-
-const coerceInputFieldValue = async (
-  def: CoercibleGraphQLInputField,
-  value: any,
-  onError?: (error: Error) => void,
-) => coerceInputFieldOrArgumentValue(
-  def,
-  value,
+  context,
+  path,
+  fieldResolveInfo,
   onError,
 );
 
-const coerceInputFieldOrArgumentValue = async (
-  def: CoercibleGraphQLInputField | CoercibleGraphQLArgument,
+const coerceInputFieldValue = async <TValue, TContext>(
+  def: CoercibleGraphQLInputField<TValue, TContext>,
   value: any,
+  context: TContext,
+  path: Path,
+  fieldResolveInfo: GraphQLResolveInfo,
+  onError?: (error: Error) => void,
+) => coerceInputFieldOrArgumentValue(
+  def,
+  value,
+  context,
+  path,
+  fieldResolveInfo,
+  onError,
+);
+
+const coerceInputFieldOrArgumentValue = async <TValue, TContext>(
+  def: CoercibleGraphQLInputField<TValue, TContext> | CoercibleGraphQLArgument<TValue, TContext>,
+  value: any,
+  context: TContext,
+  path: Path,
+  fieldResolveInfo: GraphQLResolveInfo,
   onError?: (error: Error) => void,
 ) => {
   let coercedValue: any;
@@ -114,6 +148,9 @@ const coerceInputFieldOrArgumentValue = async (
     value = await coerceInputValue(
       nullableType,
       value,
+      context,
+      path,
+      fieldResolveInfo,
       onError
     );
   } else if (isListType(nullableType)) {
@@ -122,9 +159,12 @@ const coerceInputFieldOrArgumentValue = async (
     const nonNullableItemType = getNullableType(nullableType.ofType);
     if (isInputObjectType(nonNullableItemType)) {
       value = await Promise.all(
-        value.map((itemValue) => coerceInputValue(
+        value.map((itemValue, index) => coerceInputValue(
           nonNullableItemType,
           itemValue,
+          context,
+          addPath(path, index),
+          fieldResolveInfo,
           onError
         ))
       );
@@ -133,7 +173,15 @@ const coerceInputFieldOrArgumentValue = async (
 
   const { coerce = defaultCoercer } = def;
   try {
-    coercedValue = await coerce(value);
+    coercedValue = await coerce(
+      value,
+      context,
+      {
+        inputType: def.type,
+        path,
+      },
+      fieldResolveInfo,
+    );
   } catch (e) {
     onError?.(e);
   }

@@ -5,6 +5,7 @@ export {
   Coercer,
 } from './types';
 
+export * from './utils';
 
 export {
   defaultCoercer,

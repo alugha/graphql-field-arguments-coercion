@@ -1,10 +1,16 @@
-import { GraphQLField, GraphQLOutputType, GraphQLString, GraphQLArgument } from 'graphql';
+import { GraphQLField, GraphQLOutputType, GraphQLString, GraphQLArgument, GraphQLResolveInfo } from 'graphql';
 import delay from 'delay';
 import {
   coerceFieldArgumentsValues
 } from '../values';
 
 import { makeSchema, getFieldDefinitionByName } from './utils';
+import { pathToArray } from '../utils';
+
+
+const whateverContext = Symbol('context');
+// @ts-ignore we won't really use this so we'll use a placeholder for which we can test equality
+const whateverResolveInfo = Symbol('fieldInfo') as GraphQLResolveInfo;
 
 describe('Coercion of field arguments', () => {
   describe('of a scalar', () => {
@@ -26,9 +32,19 @@ describe('Coercion of field arguments', () => {
     it('argument should have been coerced', async () => {
       coerceSpy.mockImplementation((v: string) => v.toUpperCase());
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, { title: 'Le Rouge et le Noir' });
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: 'Le Rouge et le Noir' },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith('Le Rouge et le Noir');
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual('Le Rouge et le Noir');
+      const { path } = coerceSpy.mock.calls[0][2];
+      expect(pathToArray(path)).toEqual(['title']);
+      expect(coerceSpy.mock.calls[0][3]).toEqual(whateverResolveInfo);
+
       expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
     });
 
@@ -41,6 +57,8 @@ describe('Coercion of field arguments', () => {
       const coercedArguments = await coerceFieldArgumentsValues(
         field,
         { title: 'Le Rouge et le Noir' },
+        whateverContext,
+        whateverResolveInfo,
         onErrorSpy
       );
 
@@ -55,9 +73,15 @@ describe('Coercion of field arguments', () => {
           return v.toUpperCase()
         });
 
-        const coercedArguments = await coerceFieldArgumentsValues(field, { title: 'Le Rouge et le Noir' });
+        const coercedArguments = await coerceFieldArgumentsValues(
+          field,
+          { title: 'Le Rouge et le Noir' },
+          whateverContext,
+          whateverResolveInfo,
+        );
 
-        expect(coerceSpy).toHaveBeenCalledWith('Le Rouge et le Noir');
+        expect(coerceSpy).toHaveBeenCalled();
+        expect(coerceSpy.mock.calls[0][0]).toEqual('Le Rouge et le Noir');
         expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
       });
 
@@ -73,6 +97,9 @@ describe('Coercion of field arguments', () => {
         const coercedArguments = await coerceFieldArgumentsValues(
           field,
           { title: 'Le Rouge et le Noir' },
+          whateverContext,
+          whateverResolveInfo,
+
           onErrorSpy
         );
 
@@ -101,9 +128,15 @@ describe('Coercion of field arguments', () => {
     it('argument should have been coerced', async () => {
       coerceSpy.mockImplementation((v: string) => v.toUpperCase());
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, { title: 'Le Rouge et le Noir' });
-
-      expect(coerceSpy).toHaveBeenCalledWith('Le Rouge et le Noir');
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: 'Le Rouge et le Noir' },
+        whateverContext,
+        whateverResolveInfo,
+      );
+      
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual('Le Rouge et le Noir');
       expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
     });
 
@@ -133,9 +166,15 @@ describe('Coercion of field arguments', () => {
     it('argument should have been coerced', async () => {
       coerceSpy.mockImplementation((v: string) => v.toUpperCase());
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, { type: 'romantic' });
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { type: 'romantic' },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith('romantic');
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual('romantic');
       expect(coercedArguments).toEqual({ type: 'ROMANTIC' });
     });
 
@@ -161,11 +200,15 @@ describe('Coercion of field arguments', () => {
     it('argument should have been coerced', async () => {
       coerceSpy.mockImplementation((v: string[]) => v.map(t => t.toLowerCase()));
 
-      const coercedArguments = await coerceFieldArgumentsValues(field,{
-        tags: ['classic', 'French']
-      });
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { tags: ['classic', 'French'] },
+        whateverContext,
+        whateverResolveInfo,
+       );
 
-      expect(coerceSpy).toHaveBeenCalledWith(['classic', 'French']);
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual(['classic', 'French']);
       expect(coercedArguments).toEqual({ tags : ['classic', 'french']});
     });
 
@@ -198,9 +241,16 @@ describe('Coercion of field arguments', () => {
         book: {
           title: 'Le Rouge et le Noir'
         }
-      });
+      },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith({ title: 'Le Rouge et le Noir' });
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual({ title: 'Le Rouge et le Noir' });
+      const { path } = coerceSpy.mock.calls[0][2];
+      expect(pathToArray(path)).toEqual(['book']);
+
       expect(coercedArguments).toEqual({
         book: {
           title: 'Le Rouge et le Noir',
@@ -248,13 +298,19 @@ describe('Coercion of an input object', () => {
         return { url, file, _coerced: true };
       });
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, {
-        image: {
-          url: 'fooooo',
-        }
-      });
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        {
+          image: {
+            url: 'fooooo',
+          }
+        },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith({ url: 'fooooo' });
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual({ url: 'fooooo' });
       expect(coercedArguments).toEqual({
         image: {
           url: 'fooooo',
@@ -279,11 +335,16 @@ describe('Coercion of an input object', () => {
         file: Buffer.from('blah'),
       };
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, {
-        image
-      }, onErrorSpy);
-
-      expect(coerceSpy).toHaveBeenCalledWith(image);
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { image },
+        whateverContext,
+        whateverResolveInfo,
+        onErrorSpy
+      );
+      
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual(image);
       expect(onErrorSpy).toHaveBeenCalledWith(error);
     });
   });
@@ -328,15 +389,23 @@ describe('Coercion of an input object', () => {
         return { ...input, _coerced: true };
       });
 
-      const coercedArguments = await coerceFieldArgumentsValues(field, {
-        book: {
-          image: {
-            url: 'fooooo',
+      const coercedArguments = await coerceFieldArgumentsValues(field,
+        {
+          book: {
+            image: {
+              url: 'fooooo',
+            }
           }
-        }
-      });
+        },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith({ url: 'fooooo' });
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual({ url: 'fooooo' });
+      const { path } = coerceSpy.mock.calls[0][2];
+      expect(pathToArray(path)).toEqual(['book', 'image']);
+
       expect(coercedArguments).toEqual({
         book: {
           image: {
@@ -379,7 +448,7 @@ describe('Coercion of an input object', () => {
       field = getFieldDefinitionByName(schema, 'createBook');
     });
 
-    it.only('should coerce value', async () => {
+    it('should coerce value', async () => {
       coerceSpy.mockImplementation((input: ImageInput) => {
         return { ...input, _coerced: true };
       });
@@ -393,9 +462,23 @@ describe('Coercion of an input object', () => {
             url: 'barrr',
           },
         ],
-      });
+      },
+        whateverContext,
+        whateverResolveInfo,
+      );
 
-      expect(coerceSpy).toHaveBeenCalledWith({ url: 'fooooo' });
+      expect(coerceSpy).toHaveBeenCalledTimes(2);
+      // first call
+      expect(coerceSpy.mock.calls[0][0]).toEqual({ url: 'fooooo' });
+      const { path: path1 } = coerceSpy.mock.calls[0][2];
+      expect(pathToArray(path1)).toEqual(['illustrations', 0]);
+
+      // second calll
+      const { path: path2 } = coerceSpy.mock.calls[1][2];
+      expect(pathToArray(path2)).toEqual(['illustrations', 1]);
+      expect(coerceSpy.mock.calls[1][0]).toEqual({ url: 'barrr' });
+
+
       expect(coercedArguments).toEqual({
         illustrations: [
           {
@@ -432,16 +515,23 @@ describe('Coercion of input field', () => {
     field = getFieldDefinitionByName(schema, 'createBook');
   });
 
-  it('argument should have been coerced', async () => {
+  it('value should have been coerced', async () => {
     coerceSpy.mockImplementation((v: string) => v.toUpperCase());
 
     const coercedArguments = await coerceFieldArgumentsValues(field, {
       book: {
         title: 'Le Rouge et le Noir'
       }
-    });
+    },
+      whateverContext,
+      whateverResolveInfo,
+    );
 
-    expect(coerceSpy).toHaveBeenCalledWith('Le Rouge et le Noir');
+    expect(coerceSpy).toHaveBeenCalled();
+    expect(coerceSpy.mock.calls[0][0]).toEqual('Le Rouge et le Noir');
+    const { path } = coerceSpy.mock.calls[0][2];
+    expect(pathToArray(path)).toEqual(['book', 'title']);
+
     expect(coercedArguments).toEqual({
       book: { 
         title: 'LE ROUGE ET LE NOIR'
@@ -461,6 +551,8 @@ describe('Coercion of input field', () => {
           title: 'Le Rouge et le Noir'
         }
       },
+      whateverContext,
+      whateverResolveInfo,
       onErrorSpy
     );
 
