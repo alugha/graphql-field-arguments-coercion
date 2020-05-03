@@ -132,7 +132,7 @@ The full example is runnable [here](https://codesandbox.io/s/graphql-field-argum
 
 ## Related
 
-- [Validation in Input types proposal (graphql-js#361)](https://github.com/graphql/graphql-js/issues/361)
-- [Support resolve on Input types (graphql-js#747)](https://github.com/graphql/graphql-js/issues/747)
-- [Directive visitArgumentDefinition variable healing (graphql-tools#789)](https://github.com/ardatan/graphql-tools/issues/789)
-- [SchemaDirectiveVisitor.visitInputFieldDefinition resolver doesn't fire (graphql-tools#858)](https://github.com/ardatan/graphql-tools/issues/858)
+- Validation in Input types proposal [(graphql-js#361)](https://github.com/graphql/graphql-js/issues/361)
+- Support resolve on Input types [(graphql-js#747)](https://github.com/graphql/graphql-js/issues/747)
+- Directive visitArgumentDefinition variable healing [(graphql-tools#789)](https://github.com/ardatan/graphql-tools/issues/789)
+- SchemaDirectiveVisitor.visitInputFieldDefinition resolver doesn't fire [(graphql-tools#858)](https://github.com/ardatan/graphql-tools/issues/858)
