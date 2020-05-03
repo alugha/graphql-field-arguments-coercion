@@ -1,4 +1,4 @@
-import { CoercibleGraphQLInputField, defaultCoercer, CoercibleGraphQLArgument, coerceFieldArgumentsValues } from './src';
+import { CoercibleGraphQLInputField, defaultCoercer, CoercibleGraphQLArgument, coerceFieldArgumentsValues, pathToArray } from './src';
 import { assert } from 'chai';
 import { SchemaDirectiveVisitor, makeExecutableSchema, visitSchema, SchemaVisitor } from 'graphql-tools';
 import { GraphQLField, defaultFieldResolver, graphql } from 'graphql';
@@ -28,7 +28,12 @@ class LengthDirective<TContext> extends SchemaDirectiveVisitor<{ max: number }, 
     field.coerce = async (value, ...args) => {
       // called other coercers
       if (coerce) value = await coerce(value, ...args);
-      assert.isAtMost(value.length, this.args.max);
+
+      const { path } = args[1]; // inputCoerceInfo
+      const { max } = this.args;
+
+      assert.isAtMost(value.length, max, `${pathToArray(path).join('.')} length`);
+
       return value;
     }
   }

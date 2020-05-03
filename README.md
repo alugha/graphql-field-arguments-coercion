@@ -45,10 +45,11 @@ class LengthDirective<TContext> extends SchemaDirectiveVisitor<{ max: number }, 
       CoercibleGraphQLArgument<string, TContext>
     ) {
       const { coerce = defaultCoercer } = input;
-      input.coerce = async (value, _, { path }) => {
+      input.coerce = async (value, ...args) => {
         // call previous coercers if any
         if (coerce) value = await coerce(value, ...args);
 
+        const { path } = args[1]; // inputCoerceInfo
         const { max } = this.args;
         assert.isAtMost(value.length, max, `${pathToArray(path).join('.')} length exceeds ${max}`);
 
@@ -62,6 +63,14 @@ We define the schema as usual but add the directive:
 
 ```ts
 const typeDefs = `
+type Query {
+  books: [Book]
+}
+
+type Book {
+  title: String
+}
+
 type Mutation {
   createBook(book: BookInput): Book
 }
