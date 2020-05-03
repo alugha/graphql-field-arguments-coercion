@@ -22,8 +22,8 @@ input BookInput {
   title: String! @length(max: 50)
 }`;
 
-class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
-  visitInputFieldDefinition(field: CoercibleGraphQLInputField<string>) {
+class LengthDirective<TContext> extends SchemaDirectiveVisitor<{ max: number }, TContext> {
+  visitInputFieldDefinition(field: CoercibleGraphQLInputField<string, TContext>) {
     const { coerce } = field;
     field.coerce = async (value, ...args) => {
       // called other coercers
@@ -33,7 +33,7 @@ class LengthDirective extends SchemaDirectiveVisitor<{ max: number }> {
     }
   }
 
-  visitArgumentDefinition(argument: CoercibleGraphQLArgument<string>) {
+  visitArgumentDefinition(argument: CoercibleGraphQLArgument<string, TContext>) {
     const { coerce = defaultCoercer } = argument;
     argument.coerce = async (value, ...args) => {
       // called other coercers
@@ -67,14 +67,16 @@ const schema = makeExecutableSchema({
   }
 });
 
-class FieldResoverWrapperVisitor extends SchemaVisitor {
-  visitFieldDefinition(field: GraphQLField<any, any>) {
+class FieldResoverWrapperVisitor<TContext> extends SchemaVisitor {
+  visitFieldDefinition(field: GraphQLField<any, TContext>) {
     const { resolve = defaultFieldResolver } = field;
     field.resolve = async (parent, argumentValues, context, info) => {
       const coercionErrors: Error[] = [];
       const coercedArgumentValues = await coerceFieldArgumentsValues(
         field,
         argumentValues,
+        context,
+        info,
         e => coercionErrors.push(e)
       );
 
