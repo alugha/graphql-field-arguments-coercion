@@ -20,9 +20,11 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/delay": "^3.1.0",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.13.4",
     "chai": "^4.2.0",
+    "delay": "^4.3.0",
     "graphql": "^15.0.0",
     "graphql-tools": "^5.0.0",
     "jest": "^25.5.4",
