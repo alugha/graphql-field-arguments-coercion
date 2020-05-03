@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/graphql-field-arguments-coercion.svg)](https://badge.fury.io/js/graphql-field-arguments-coercion)
 
-Utility to implement directive-based validation and transformation of argument values in GraphQL. 
+Utility to implement directive-based validation and transformation of field arguments in GraphQL. 
 
 ## Install
 
