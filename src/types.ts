@@ -18,7 +18,7 @@ export type Path = {
 type InputCoerceInfo = {
   inputType: GraphQLInputType | null,
   /**
-   * Path to the value being in the given
+   * Path to the value being coerced in the given
    * argument values.
    */
   path: Path
