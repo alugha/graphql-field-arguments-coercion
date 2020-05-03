@@ -1,7 +1,11 @@
 {
   "name": "graphql-field-arguments-coercion",
   "version": "1.0.0-rc",
-  "description": "",
+  "description": "Utility to implement directive-based validation and transformation of field arguments in GraphQL",
+  "keywords": [
+    "graphql",
+    "directives"
+  ],
   "main": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
