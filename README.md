@@ -1,6 +1,6 @@
 # graphql-field-arguments-coercion
 
-Utility to implement directive-based validation and transform of argument values in GraphQL. 
+Utility to implement directive-based validation and transformation of argument values in GraphQL. 
 
 ## Install
 
@@ -58,7 +58,7 @@ class LengthDirective<TContext> extends SchemaDirectiveVisitor<{ max: number }, 
 }
 ```
 
-We define the schema as usual and with the directive:
+We define the schema as usual but add the directive:
 
 ```ts
 const typeDefs = `
@@ -83,7 +83,7 @@ const schema = makeExecutableSchema({
 });
 ```
 
-Now we'll wrap all the field's resolvers with a use of `coerceFieldArgumentsValues` so that we make sure the arguments are valid before calling the resolver and throw the appropriate error otherwise.
+Now we'll wrap all fields' resolvers with a use of `coerceFieldArgumentsValues` so that we make sure the arguments are valid before calling the resolver — or, we throw the appropriate error otherwise.
 
 To do so, we'll use `graphql-tools`'s `visitSchema` and `SchemaVisitor`:
 
@@ -105,7 +105,7 @@ class FieldResoverWrapperVisitor<TContext> extends SchemaVisitor {
       );
 
       if (coercionErrors.length > 0) {
-        throw new Error(`Arguments are incorrect: ${coercionErrors.join(',')}`);
+        throw new ValidationError(`Arguments are incorrect: ${coercionErrors.join(',')}`);
       }
 
       return resolve(parent, coercedArgumentValues, context, info);
