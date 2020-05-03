@@ -1,0 +1,7 @@
+src
+lib/tests
+jest.config.js
+tsconfig.json
+usage-example.ts
+package-lock.json
+.vscode
