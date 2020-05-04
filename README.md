@@ -118,7 +118,7 @@ class FieldResoverWrapperVisitor<TContext> extends SchemaVisitor {
       );
 
       if (coercionErrors.length > 0) {
-        throw new ValidationError(`Arguments are incorrect: ${coercionErrors.join(',')}`);
+        throw new UserInputError(`Arguments are incorrect: ${coercionErrors.join(',')}`);
       }
 
       return resolve(parent, coercedArgumentValues, context, info);
