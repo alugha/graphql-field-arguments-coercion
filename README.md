@@ -2,7 +2,9 @@
 
 [![npm version](https://badge.fury.io/js/graphql-field-arguments-coercion.svg)](https://badge.fury.io/js/graphql-field-arguments-coercion)
 
-Utility to implement directive-based validation and transformation of field arguments in GraphQL. 
+Implementation of the support of coerce function on GraphQL Input types.
+
+Used to implement directive-based validation and transformation of field arguments.
 
 ## Install
 
@@ -12,7 +14,7 @@ npm install graphql-field-arguments-coercion -D
 
 ## Usage
 
-Use `coerceFieldArgumentsValues(field, args, ...)` to coerce the arguments of the given field. To coerce the arguments' values, it will recusrsively use the `coerce` property, a coercer function, hold by `ArgumentDefinition`, `InputObject` and `InputObjectField`.
+Use `coerceFieldArgumentsValues(field, args, ...)` to coerce the arguments of the given field. To coerce the arguments' values, it will recursively use the `coerce` property, a coercer function, hold by `ArgumentDefinition`, `InputObject` and `InputObjectField`.
 
 A coercer function receives 4 arguments:
 - `value`: the value to be coerced.
@@ -94,7 +96,7 @@ const schema = makeExecutableSchema({
 });
 ```
 
-Now we'll wrap all fields' resolvers with a use of `coerceFieldArgumentsValues` so that we make sure the arguments are valid before calling the resolver — or, we throw the appropriate error otherwise.
+Now we'll wrap all fields' resolvers with a use of `coerceFieldArgumentsValues` so that we make sure the arguments are valid before calling the resolver — otherwise, we throw the appropriate error.
 
 To do so, we'll use `graphql-tools`'s `visitSchema` and `SchemaVisitor`:
 

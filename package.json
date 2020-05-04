@@ -1,7 +1,12 @@
 {
   "name": "graphql-field-arguments-coercion",
   "version": "1.0.0",
-  "description": "Utility to implement directive-based validation and transformation of field arguments in GraphQL",
+  "description": "Implementation of the support of coerce function on GraphQL Input types",
+  "homepage": "https://github.com/alexstrat/graphql-field-arguments-coercion",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexstrat/graphql-field-arguments-coercion.git"
+  },
   "keywords": [
     "graphql",
     "directives"
