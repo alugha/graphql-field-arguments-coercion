@@ -1,6 +1,6 @@
 {
   "name": "graphql-field-arguments-coercion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Implementation of the support of coerce function on GraphQL Input types",
   "homepage": "https://github.com/alexstrat/graphql-field-arguments-coercion",
   "repository": {
