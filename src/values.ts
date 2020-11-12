@@ -32,7 +32,8 @@ export const coerceFieldArgumentsValues = async <TSource, TContext>(
     const { name } = argDef;
     const argValue = values[name];
     if (argValue == null) {
-      return argValue;
+      coercedValues[name] = argValue;
+      return;
     }
 
     const coercedArgValue = await coerceArgumentValue(
@@ -66,7 +67,8 @@ const coerceInputValue = async <TContext>(
 
     const value = values[name];
     if (value == null) {
-      return value;
+      coercedValues[name] = value;
+      return;
     }
 
     try {
