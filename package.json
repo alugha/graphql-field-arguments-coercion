@@ -21,7 +21,7 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "graphql": "^15.0.0"    
+    "graphql": "^15.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
