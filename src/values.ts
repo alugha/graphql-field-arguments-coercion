@@ -32,7 +32,6 @@ export const coerceFieldArgumentsValues = async <TSource, TContext>(
     const { name } = argDef;
     const argValue = values[name];
     if (argValue === undefined) {
-      delete coercedValues[name];
       return;
     }
     if (argValue === null) {
@@ -71,7 +70,6 @@ const coerceInputValue = async <TContext>(
 
     const value = values[name];
     if (value === undefined) {
-      delete coercedValues[name];
       return;
     }
     if (value === null) {
