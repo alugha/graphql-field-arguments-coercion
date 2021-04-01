@@ -48,6 +48,49 @@ describe('Coercion of field arguments', () => {
       expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
     });
 
+    it('should coerce falsy values', async () => {
+      coerceSpy.mockImplementation((v: string) => v === '' ? 'empty' : 'not empty');
+
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: '' },
+        whateverContext,
+        whateverResolveInfo,
+      );
+
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual('');
+      const { path } = coerceSpy.mock.calls[0][2];
+      expect(pathToArray(path)).toEqual(['title']);
+      expect(coerceSpy.mock.calls[0][3]).toEqual(whateverResolveInfo);
+
+      expect(coercedArguments).toEqual({ title: 'empty' });
+    });
+
+    it('should preserve null values', async () => {
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: null },
+        whateverContext,
+        whateverResolveInfo,
+      );
+
+      expect(coerceSpy).not.toHaveBeenCalled();
+      expect(coercedArguments).toEqual({ title: null });
+    });
+
+    it('should leave undefined values out', async () => {
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: undefined },
+        whateverContext,
+        whateverResolveInfo,
+      );
+
+      expect(coerceSpy).not.toHaveBeenCalled();
+      expect(coercedArguments).toEqual({});
+    });
+
     it('should report thrown error', async () => {
       const onErrorSpy = jest.fn();
 
@@ -140,6 +183,21 @@ describe('Coercion of field arguments', () => {
       expect(coercedArguments).toEqual({ title: 'LE ROUGE ET LE NOIR' });
     });
 
+    it('should coerce falsy values', async () => {
+      coerceSpy.mockImplementation((v: string) => v === '' ? 'empty' : 'not empty');
+
+      const coercedArguments = await coerceFieldArgumentsValues(
+        field,
+        { title: '' },
+        whateverContext,
+        whateverResolveInfo,
+      );
+
+      expect(coerceSpy).toHaveBeenCalled();
+      expect(coerceSpy.mock.calls[0][0]).toEqual('');
+      expect(coercedArguments).toEqual({ title: 'empty' });
+    })
+
   });
   describe('of an enum', () => {
     let coerceSpy: jest.Mock;
@@ -221,6 +279,9 @@ describe('Coercion of field arguments', () => {
     const typDefs = `
     input BookInput {
       title: String
+      description: String
+      category: String
+      author: String
     }
     type Mutation {
       createBook(
@@ -239,7 +300,10 @@ describe('Coercion of field arguments', () => {
 
       const coercedArguments = await coerceFieldArgumentsValues(field, {
         book: {
-          title: 'Le Rouge et le Noir'
+          title: 'Le Rouge et le Noir',
+          description: '',
+          category: null,
+          author: undefined
         }
       },
         whateverContext,
@@ -247,13 +311,20 @@ describe('Coercion of field arguments', () => {
       );
 
       expect(coerceSpy).toHaveBeenCalled();
-      expect(coerceSpy.mock.calls[0][0]).toEqual({ title: 'Le Rouge et le Noir' });
+      expect(coerceSpy.mock.calls[0][0]).toEqual({
+        title: 'Le Rouge et le Noir',
+        description: '',
+        category: null,
+        author: undefined
+      });
       const { path } = coerceSpy.mock.calls[0][2];
       expect(pathToArray(path)).toEqual(['book']);
 
       expect(coercedArguments).toEqual({
         book: {
           title: 'Le Rouge et le Noir',
+          description: '',
+          category: null,
           _new: true 
         }
       });
@@ -276,7 +347,9 @@ describe('Coercion of an input object', () => {
       scalar Upload
 
       input ImageInput @coerceSpy {
-        url: String,
+        url: String
+        name: String
+        size: Int
         file: Upload
       }
     
@@ -294,8 +367,8 @@ describe('Coercion of an input object', () => {
     });
 
     it('should coerce value', async () => {
-      coerceSpy.mockImplementation(({ url, file }: ImageInput) => {
-        return { url, file, _coerced: true };
+      coerceSpy.mockImplementation((input: ImageInput) => {
+        return { ...input, _coerced: true };
       });
 
       const coercedArguments = await coerceFieldArgumentsValues(
@@ -303,6 +376,8 @@ describe('Coercion of an input object', () => {
         {
           image: {
             url: 'fooooo',
+            name: null,
+            size: 0,
           }
         },
         whateverContext,
@@ -310,10 +385,16 @@ describe('Coercion of an input object', () => {
       );
 
       expect(coerceSpy).toHaveBeenCalled();
-      expect(coerceSpy.mock.calls[0][0]).toEqual({ url: 'fooooo' });
+      expect(coerceSpy.mock.calls[0][0]).toEqual({
+        url: 'fooooo',
+        name: null,
+        size: 0,
+      });
       expect(coercedArguments).toEqual({
         image: {
           url: 'fooooo',
+          name: null,
+          size: 0,
           _coerced: true
         }
       });
@@ -362,7 +443,9 @@ describe('Coercion of an input object', () => {
       scalar Upload
 
       input ImageInput @coerceSpy {
-        url: String,
+        url: String
+        name: String
+        size: Int
         file: Upload
       }
 
@@ -394,6 +477,8 @@ describe('Coercion of an input object', () => {
           book: {
             image: {
               url: 'fooooo',
+              name: null,
+              size: 0,
             }
           }
         },
@@ -402,7 +487,11 @@ describe('Coercion of an input object', () => {
       );
 
       expect(coerceSpy).toHaveBeenCalled();
-      expect(coerceSpy.mock.calls[0][0]).toEqual({ url: 'fooooo' });
+      expect(coerceSpy.mock.calls[0][0]).toEqual({
+        url: 'fooooo',
+        name: null,
+        size: 0,
+      });
       const { path } = coerceSpy.mock.calls[0][2];
       expect(pathToArray(path)).toEqual(['book', 'image']);
 
@@ -410,6 +499,8 @@ describe('Coercion of an input object', () => {
         book: {
           image: {
             url: 'fooooo',
+            name: null,
+            size: 0,
             _coerced: true
           }
         }
@@ -538,6 +629,67 @@ describe('Coercion of input field', () => {
       }
     });
   });
+
+  it('should coerce falsy values', async () => {
+    coerceSpy.mockImplementation((v: string) => v === '' ? 'empty' : 'not empty');
+
+    const coercedArguments = await coerceFieldArgumentsValues(field, {
+      book: {
+        title: ''
+      }
+    },
+      whateverContext,
+      whateverResolveInfo,
+    );
+
+    expect(coerceSpy).toHaveBeenCalled();
+    expect(coerceSpy.mock.calls[0][0]).toEqual('');
+    const { path } = coerceSpy.mock.calls[0][2];
+    expect(pathToArray(path)).toEqual(['book', 'title']);
+
+    expect(coercedArguments).toEqual({
+      book: { 
+        title: 'empty'
+      }
+    });
+  });
+
+  it('should preserve null values', async () => {
+    const coercedArguments = await coerceFieldArgumentsValues(
+      field,
+      {
+        book: {
+          title: null
+        },
+      },
+      whateverContext,
+      whateverResolveInfo,
+    );
+
+    expect(coerceSpy).not.toHaveBeenCalled();
+    expect(coercedArguments).toEqual({
+      book: { 
+        title: null
+      }
+    });
+  });
+
+  it('should leave undefined values out', async () => {
+    const coercedArguments = await coerceFieldArgumentsValues(
+      field,
+      {
+        book: {
+          title: undefined
+        },
+      },
+      whateverContext,
+      whateverResolveInfo,
+    );
+
+    expect(coerceSpy).not.toHaveBeenCalled();
+    expect(coercedArguments).toEqual({ book: {} });
+  });
+
   it('should report thrown error', async () => {
     const onErrorSpy = jest.fn();
 
