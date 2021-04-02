@@ -32,14 +32,14 @@
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/delay": "^3.1.0",
-    "@types/jest": "^25.2.1",
+    "@types/jest": "^26.0.22",
     "@types/node": "^13.13.4",
     "chai": "^4.2.0",
     "delay": "^4.3.0",
     "graphql": "^15.0.0",
     "graphql-tools": "^5.0.0",
-    "jest": "^25.5.4",
-    "ts-jest": "^25.4.0",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.4",
     "ts-node": "^8.9.1",
     "typescript": "^3.8.3"
   }
