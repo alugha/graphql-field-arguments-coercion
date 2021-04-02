@@ -1,3 +1,9 @@
+## v1.1.1 (2021-04-02)
+
+Misc:
+
+- Switch license to MIT as discussed with @alexstrat over email
+
 ## v1.1.0 (2021-04-01)
 
 Bugfixes:

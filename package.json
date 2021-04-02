@@ -1,6 +1,6 @@
 {
   "name": "graphql-field-arguments-coercion",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Implementation of the support of coerce function on GraphQL Input types",
   "homepage": "https://github.com/alugha/graphql-field-arguments-coercion",
   "repository": {
