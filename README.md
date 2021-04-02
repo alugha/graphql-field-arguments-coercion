@@ -6,6 +6,8 @@ Implementation of the support of coerce function on GraphQL Input types.
 
 Used to implement directive-based validation and transformation of field arguments.
 
+Originally developed by [Alexandre Lacheze](https://github.com/alexstrat/) who was kind enough to transfer the repository and npm package for future development.
+
 ## Install
 
 ```sh

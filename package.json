@@ -24,8 +24,8 @@
     "test": "jest",
     "build": "tsc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "alugha GmbH <hello@alugha.com> (https://alugha.com)",
+  "license": "MIT",
   "peerDependencies": {
     "graphql": "^15.0.0"
   },
